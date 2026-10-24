@@ -1,36 +1,27 @@
-name: Build APK
-
-on:
-  push:
-    branches: [ main, master ]
-  workflow_dispatch:
-
-permissions:
-  contents: write
+name: Generer Cle APK
+on: workflow_dispatch
 
 jobs:
-  build:
+  generer-cle:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: 8.7
-          cache: false
+      - name: Generer la cle
+        run: |
+          keytool -genkeypair -v -keystore ma_cle.jks -alias mon_ftp -keyalg RSA -keysize 2048 -validity 10000 -storepass "12345" -keypass "12345" -dname "CN=ClientFTP, OU=Dev, O=Perso, L=Paris, C=FR"
 
-      - name: Build Debug APK
-        run: gradle assembleDebug --no-daemon
+      - name: Convertir en base64
+        run: |
+          base64 -w0 ma_cle.jks > ma_cle.b64
+          cat ma_cle.b64
 
-      - name: Upload APK
+      - name: Sauvegarder la cle
         uses: actions/upload-artifact@v4
         with:
-          name: ftp-client-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: ma-cle-secrete
+          path: ma_cle.jks
